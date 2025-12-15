@@ -1,0 +1,1 @@
+sanal ortam ile herkes aynı ortamı kurar. proje izolasyonu sağlanır.
