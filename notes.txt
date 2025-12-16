@@ -1,17 +1,7 @@
 sanal ortam ile herkes aynı ortamı kurar. proje izolasyonu sağlanır.
 source venv/bin/activate env aktif etme
 
-kelime ve sorgu eşleştirme:
-
-sözlük:
-customers: müşteri, kullanıcı, üye, insan, kayıt
-orders: sipariş, satış, işlem, harcama
-products: ürün, item, mal, eşya
-orders_item: sipariş kalemi, adet, ürün adeti
-
-COUNT -> kaç, kaç adet, kaç tane, sayısı
-SUM   -> toplam, ciro, ne kadr
-AVG  -> ortalama
-MAX -> en yüksek, en çok, en fazla, maksimum
-MIN -> en az, en düşük, minimum
-TOP, LIMIT -> ilk, en çok, top
+// __pycache__/: pythonun kendi oluşturduğu geçici derleme dosyası. gizlilikle alakası yok makineye özel olduğu için pushlamıyoruz.
+//.gitignore : gite şu dosyaları asla takip etme deriz. bir kural dosyası.
+//venv: binlerce dosya ve sistem bağımlılığı
+//.env: şifrelerimiz db şifresi api key token her şey gider ASLA GITHUBA PUSHLAMA

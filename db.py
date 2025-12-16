@@ -1,16 +1,16 @@
-import psycopg2
-import pandas as pd
+import psycopg2 #python ile postgresql bağlantısı
+import pandas as pd #sqlden gelen sonuçları dataframe olarak tutmak için
 
-def get_connection():
-    return psycopg2.connect(
-        host="localhost",
+def get_connection(): #postgre bağlantısını oluşturmak için
+    return psycopg2.connect( #bağlantı nesnesini döndürür
+        host="localhost", #eğer uzak sunucu olsaydı burda IP olurdu
         database="nlp_sql_db",
         user="zeynepyildirim",
-        password=""  # şifre varsa buraya yaz
+        password=""
     )
 
-def run_query(sql):
+def run_query(sql): #dışarıdan sql sorgusunu alır ve çalıştırır
     conn = get_connection()
-    df = pd.read_sql(sql, conn)
+    df = pd.read_sql(sql, conn) #sonuç dataframe e dönüşür
     conn.close()
     return df
