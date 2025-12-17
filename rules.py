@@ -35,6 +35,12 @@ TIME_KEYWORDS = {
     "this_year": {"bu yıl", "bu yil"},
 }
 
+MONTH_MAP = { 
+    "ocak": 1, "subat": 2, "mart": 3, "nisan": 4, "mayis": 5, "haziran": 6,
+    "temmuz": 7, "agustos": 8, "eylul": 9, "ekim": 10, "kasim": 11, "aralik": 12
+}
+
+
 def find_intent(text: str) -> str:
     if any(k in text for k in INTENT_KEYWORDS["top"]):
         return "top"
@@ -54,10 +60,36 @@ def find_entity(text: str) -> str | None:  #girdi normalize edilmiş cümle, ç�
             return table #en az biri geçiyorsa okey
     return None 
 
-
-def extract_year(text: str):  #yıl yakalama regexi
-    match = re.search(r"(19|20)\d{2}", text)
+#zamanla ilgili her şey bu modül sayfasında yer almalıdır
+def extract_year(text: str):  #yıl yakalama regexi, metin içindeki 4 haneli yılı bulur
+    match = re.search(r'\b(19|20)\d{2}\b', text)
     if match:
-        return int(match.group())
+        return int(match.group(0))
     return None
 
+
+def extract_month_year(text: str): #2022 Mart gibi ifadeleri yakalar. 
+    year = extract_year(text) #yılı bulur
+    found_month = None #ayı bulur
+    for month_name, month_num in MONTH_MAP.items():
+        if month_name in text: 
+            found_month = month_num
+            break
+    
+    if found_month and year:  # Eğer hem ay hem yıl bulunduysa döndür
+        return found_month, year
+    
+    return None
+
+def extract_interval(text: str): #son 3 ay gibi ifadeleri yakalar sadece sayıyıy döndürür
+    match = re.search(r'son (\d+) ay', text)
+    if match:
+        return int(match.group(1))
+    return None
+
+def detect_month_filter(text: str): #bu ay ve geçen ay ifadelerini yakalar
+    if "bu ay" in text:
+        return "this_month"
+    if "gecen ay" in text:
+        return "last_month"
+    return None
