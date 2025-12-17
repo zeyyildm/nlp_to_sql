@@ -46,4 +46,8 @@ def find_intent(text: str) -> str:
 
 #iflerin yapısı gereği bir önem sırası oldu sonradan bunu düzenleyebiliriz
     
-    
+def find_entity(text: str) -> str | None:  #girdi normalize edilmiş cümle, çıktı tablo adı veya none
+    for table, keywords in ENTITY_KEYWORDS.items(): #sözlükteki her tabloya bakar
+        if any(k in text for k in keywords): #o tabloya ait her kelimeyi cümlede arar
+            return table #en az biri geçiyorsa okey
+    return None 

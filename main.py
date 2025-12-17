@@ -5,7 +5,9 @@
 
 # print(result)
 
-from rules import normalize, find_intent
+from rules import normalize, find_intent, find_entity 
+from sql_generator import generate_sql
+from db import run_query
 
 while True: #program sürekli devam etsin
 
@@ -16,6 +18,19 @@ while True: #program sürekli devam etsin
 
     normalized = normalize(text)
     intent = find_intent(normalized)
+    entity = find_entity(normalized)
 
     print("Normalize edilmiş:", normalized)
     print("Tespit edilen intent:", intent)
+    print("Tespit edilen tablo:", entity)
+
+    sql = generate_sql(intent, entity)
+
+    if sql:
+        print("Oluşturulan SQL:", sql)
+        result = run_query(sql)
+        print(result)
+    else:
+        print("Bu sorgu şu an desteklenmiyor.")
+
+
