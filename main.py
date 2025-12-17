@@ -5,7 +5,7 @@
 
 # print(result)
 
-from rules import normalize, find_intent, find_entity 
+from rules import normalize, find_intent, find_entity, extract_year
 from sql_generator import generate_sql
 from db import run_query
 
@@ -24,7 +24,7 @@ while True: #program sürekli devam etsin
     print("Tespit edilen intent:", intent)
     print("Tespit edilen tablo:", entity)
 
-    sql = generate_sql(intent, entity)
+    sql = generate_sql(intent, entity, normalized)
 
     if sql:
         print("Oluşturulan SQL:", sql)

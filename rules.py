@@ -2,7 +2,9 @@ import re #regex için
 
 def normalize(text: str) -> str: #test kullanıcıdan gelen str temizlenmiş hali
     text = text.strip().lower() #metnin başındaki ve sonundaki boşlukları siler
-    text = re.sub(r"[^a-z0-9çğıöşü\s]", " ", text) #harf rakam ya da boşluk olmayan her şeyi bul ve bunları boşlukla değiştir
+    tr_map = str.maketrans("çğıöşü", "cgiosu") #pcnin eşleşme yapabilmesi için içsel bir çevirme
+    text = text.translate(tr_map)  # türkçe -> ingilizce dönüşümü yapar
+    text = re.sub(r"[^a-z0-9\s]", " ", text) #harf rakam ve boşluk dışındakileri temizle
     text = re.sub(r"\s+", " ", text).strip() #bir veya daha fazla boşluk varsa bunları tek boşluğa indir
     return text #artık temizlenmiş text döner
 
@@ -40,7 +42,7 @@ def find_intent(text: str) -> str:
         return "sum"
     if any(k in text for k in INTENT_KEYWORDS["count"]):
         return "count"
-    if any(k in text for k in INTENT_KEYWORDS["top"]):
+    if any(k in text for k in INTENT_KEYWORDS["list"]):
         return "list"
     return "unknown"
 
@@ -51,3 +53,11 @@ def find_entity(text: str) -> str | None:  #girdi normalize edilmiş cümle, ç�
         if any(k in text for k in keywords): #o tabloya ait her kelimeyi cümlede arar
             return table #en az biri geçiyorsa okey
     return None 
+
+
+def extract_year(text: str):  #yıl yakalama regexi
+    match = re.search(r"(19|20)\d{2}", text)
+    if match:
+        return int(match.group())
+    return None
+
