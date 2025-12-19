@@ -46,9 +46,9 @@ SUM:
 ör: bu yıl toplam sipariş tutarı ne kadaar
 +: zaman filtreleri
 ör: 2025 martta toplam sipariş tutarı ne kadar
-+: toplam adet (orders_item) için işlemedik  TAMAMLANDI
++: toplam adet (orders_item) için işlemedik  TAMAMLANDIM
 ör: bu ay toplam kaç ürün satıldı
--:çaprım için join
++:çaprım için join TAMAMLADIM
 ör: bu ay toplam gelir ne kadar (quantity * price)
 -: müşteri bazlı toplamlar
 ör: beyzanın bu yıl toplam harcaması ne kadar

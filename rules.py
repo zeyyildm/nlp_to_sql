@@ -12,7 +12,7 @@ def normalize(text: str) -> str: #test kullanıcıdan gelen str temizlenmiş hal
 
 ENTITY_KEYWORDS = { #TEXT HANGI TABLOYU SORUYOR
     "customers": {"müşteri", "kullanıcı", "üye", "kayıt", "insan", "musteri", "kullanici", "uye", "kayit"},
-    "orders": {"sipariş", "satış", "işlem", "siparis", "satis", "islem", "harcama", "ciro", "tutar"},
+    "orders": {"sipariş", "satış", "işlem", "siparis", "satis", "islem", "harcama", "ciro", "tutar", "gelir"},
     "products": {"ürün", "item", "mal", "esya", "eşya", "fiyat"},
     "order_items": {"adet", "miktar", "kalem", "ürün adeti", "ürünadeti", "urun adeti", "urun adetı", "urun adetı",
                     "satılan", "satilan", "satış adedi", "satis adedi"},
