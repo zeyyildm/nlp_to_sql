@@ -10,7 +10,7 @@ def normalize(text: str) -> str: #test kullanıcıdan gelen str temizlenmiş hal
 
 #SÖZLÜKLER
 
-ENTITY_KEYWORDS = {
+ENTITY_KEYWORDS = { #TEXT HANGI TABLOYU SORUYOR
     "customers": {"müşteri", "kullanıcı", "üye", "kayıt", "insan", "musteri", "kullanici", "uye", "kayit"},
     "orders": {"sipariş", "satış", "işlem", "siparis", "satis", "islem", "harcama"},
     "products": {"ürün", "item", "mal", "esya", "eşya"},
@@ -21,10 +21,10 @@ INTENT_KEYWORDS = { #sözlükle beraber niyet eşleştirmesi yapacağız
     "count": {"kaç", "kaçtane", "sayısı", "adet", "kaç adet", "kac", "kactane", "kacadet", "sayisi", "kac adet"},
     "sum": {"toplam", "ciro", "tutar", "ne kadar"},
     "list": {"listele", "göster", "getir", "hangi", "goster"},
-    "top": {"en çok", "en fazla", "ilk", "top", "en cok", "encok", "ençok", "enfazla"},
+    "top": {"en çok", "en fazla", "ilk", "en cok", "encok", "ençok", "enfazla"},
     "max": {"en yüksek", "enyuksek", "enyüksek", "en yuksek", "en çok", "encok", "ençok", "en cok", "en fazla", "enfazla", "max", "max.", "maximum"},
     "min": {"en az", "en düşük", "minimum", "min.", "min", "enaz", "endusuk", "endüşük"},
-    "avf": {"ortalama", "ort", "ort."},
+    "avg": {"ortalama", "ort", "ort."},
     
 }
 
@@ -40,6 +40,11 @@ MONTH_MAP = {
     "temmuz": 7, "agustos": 8, "eylul": 9, "ekim": 10, "kasim": 11, "aralik": 12
 }
 
+DISTINCT_KEYWORDS = {"farkli", "benzersiz", "farklı", "benzersız"}
+
+
+def detect_distinct(text: str) -> bool:
+    return any(k in text for k in DISTINCT_KEYWORDS)
 
 def find_intent(text: str) -> str:
     if any(k in text for k in INTENT_KEYWORDS["top"]):
@@ -62,9 +67,9 @@ def find_entity(text: str) -> str | None:  #girdi normalize edilmiş cümle, ç�
 
 #zamanla ilgili her şey bu modül sayfasında yer almalıdır
 def extract_year(text: str):  #yıl yakalama regexi, metin içindeki 4 haneli yılı bulur
-    match = re.search(r'\b(19|20)\d{2}\b', text)
+    match = re.search(r'\b(19|20)\d{2}\b', text) #\b sayı başka bir şeyin parçası olmasın
     if match:
-        return int(match.group(0))
+        return int(match.group(0)) #REGEXIN TAMAMEN YAKALADIĞI ŞEY
     return None
 
 
@@ -84,12 +89,11 @@ def extract_month_year(text: str): #2022 Mart gibi ifadeleri yakalar.
 def extract_interval(text: str): #son 3 ay gibi ifadeleri yakalar sadece sayıyıy döndürür
     match = re.search(r'son (\d+) ay', text)
     if match:
-        return int(match.group(1))
+        return int(match.group(1)) #SADECE 3 Ü ALMAK İSTEDİĞİMİZ İÇİN 1
     return None
 
-def detect_month_filter(text: str): #bu ay ve geçen ay ifadelerini yakalar
-    if "bu ay" in text:
-        return "this_month"
-    if "gecen ay" in text:
-        return "last_month"
+def detect_time_filter(text: str): #bu ay ve geçen ay ifadelerini yakalar
+    for time_key, keywords in TIME_KEYWORDS.items():
+        if any(k in text for k in keywords):
+            return time_key
     return None

@@ -1,6 +1,9 @@
+from where_c import build_time_where_clauses
 
 # intent + tablo bilgisini alır ve SQL cümlesine dönüştürür
-def generate_sql(intent: str, table: str,  year=None, specific_date=None, interval_months=None, relative_time=None) -> str | None:
+#neden bazı parametreler none?
+#çünkü kullanıcı örneğin her zaman bir parametre belirtmez kaç müşteri var der zaman belli değildir
+def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False) -> str | None:
     """
     Parametreler:
     - intent: count, list vb.
@@ -10,39 +13,79 @@ def generate_sql(intent: str, table: str,  year=None, specific_date=None, interv
     - interval_months: Son kaç ay olduğu (Örn: 3)
     - relative_time: 'this_month' veya 'last_month'
     """
-    if not table:
+    if not table: #tablo yoksa sonuç dönme
         return None
 
     if intent == "count":
-        sql =  f"SELECT COUNT(*) FROM {table}"
-
-        where_clauses = [] #WHERE koşullarının toplanacağı boş bir liste oluşturuldu
-
-        if specific_date: #spesifik tarih 2022 Mart gibi
-            month, sp_year = specific_date
-            where_clauses.append(f"EXTRACT(MONTH FROM created_at) = {month}")
-            where_clauses.append(f"EXTRACT(YEAR FROM created_at) = {sp_year}")
-
-        elif interval_months: #son 3 ay gibi, şimdiki zamandan X ay geriye git
-            where_clauses.append(f"created_at >= CURRENT_DATE - INTERVAL '{interval_months} months'")
-
-        elif relative_time == "this_month": #geçen ay, bu ay 
-            where_clauses.append("DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)")
+        # Eğer müşteri sayısı soruluyorsa ve zaman filtresi varsa, 
+        # orders tablosundan DISTINCT customer_id ile saymalıyız
+        # Çünkü müşteri ilk sipariş verdiğinde görülür
+        has_time_filter = year or specific_date or interval_months or relative_time
         
-        elif relative_time == "last_month":
-            where_clauses.append("DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')")
+        if table == "customers" and has_time_filter:
+            # Müşteri sayısı + zaman filtresi = orders tablosundan DISTINCT ile say
+            sql = "SELECT COUNT(DISTINCT customer_id) AS count FROM orders"
+        elif distinct and table == "orders":
+            # DISTINCT isteniyorsa ve sipariş üzerinden müşteri sayacağız:
+            sql = "SELECT COUNT(DISTINCT customer_id) AS count FROM orders"
+        else:
+            sql = f"SELECT COUNT(*) AS count FROM {table}"
 
-        elif year: #sadece yıl 
-            where_clauses.append(f"EXTRACT(YEAR FROM created_at) = {year}")
 
-        if where_clauses: #hepsini birleştirmek için
+        where_clauses = build_time_where_clauses(
+            year=year,
+            specific_date=specific_date,
+            interval_months=interval_months,
+            relative_time=relative_time
+)
+
+        if where_clauses: #join bir listenin elemanları arasına bir şey koyar
             sql += " WHERE " + " AND ".join(where_clauses)
+        #ÖR:
+        #["A", "B", "C"]
+        #" AND ".join(["A", "B", "C"])
+        #"A AND B AND C"
 
         return sql + ";"
         
 
     if intent == "list":
-        return f"SELECT * FROM {table} LIMIT 10;"
+        sql = f"SELECT * FROM {table}"
+
+        where_clauses = build_time_where_clauses(
+            year=year,
+            specific_date=specific_date,
+            interval_months=interval_months,
+            relative_time=relative_time
+    )
+
+    if where_clauses:
+        sql += " WHERE " + " AND ".join(where_clauses)
+
+        sql += " LIMIT 10;"
+        return sql
+
+    
+    if intent == "sum":
+        if table != "orders":
+            return None
+        
+        #SUM(total_count) -> o kolondaki tüm değerleri toplar
+        #!!!!!!!!!COALESCE -> EĞER SAYI NULL İSE YERİNE ŞUNU KOY
+        #DİYELIM KI 2030 YILINDAN HİÇ SİPARİŞ YOK SONUÇ 0 VEYA NONE DÖNMEZ NULL DÖNER NULL KÖTÜ ÇIKTI
+        sql = "SELECT COALESCE(SUM(total_amount), 0) AS total_amount FROM orders" #eğer null ise git onun yerine 0 koy
+
+        where_clauses = build_time_where_clauses(
+            year=year,
+            specific_date=specific_date,
+            interval_months=interval_months,
+            relative_time=relative_time
+    )
+
+        if where_clauses:
+            sql += " WHERE " + " AND ".join(where_clauses)
+
+        return sql + ";"
 
     return None
 

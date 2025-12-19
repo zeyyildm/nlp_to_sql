@@ -1,7 +1,69 @@
 sanal ortam ile herkes aynı ortamı kurar. proje izolasyonu sağlanır.
-source venv/bin/activate env aktif etme
+env kurma: python3 -m venv .venv
+source .venv/bin/activate env aktif etme
 
 // __pycache__/: pythonun kendi oluşturduğu geçici derleme dosyası. gizlilikle alakası yok makineye özel olduğu için pushlamıyoruz.
 //.gitignore : gite şu dosyaları asla takip etme deriz. bir kural dosyası.
 //venv: binlerce dosya ve sistem bağımlılığı
 //.env: şifrelerimiz db şifresi api key token her şey gider ASLA GITHUBA PUSHLAMA
+
+
+//NELER YAPILDI
+
+1- Text normalize edildi
+2- Entıty niyet gibi eşleştirilmeler yapıldı. (KURALLAR YAZILDI)
+3- Beyza dbnin herkeste aynı kurulması için tablo oluşturmaları proje dizinine çekti (yine de postgresql de duruyorlar)
+4- basit count
+5- env problemi çözüldü
+6- basit list yapıldı
+7- basit sum yaıldı
+
+//NELER YAPILACAK
+
+hem sum hem de count, list için sadece basic işlemleri yapıyor 
+birden fazla filtreyi birleştirmiyoruz 
+BENZERSIZ yapısını işlemiyoruz
+top max min intentleri
+
+COUNT:
++: basit sayma yapıyor
+ör: kaç müşteri var
++: zaman algılıyor
+ör: bu ay kaç sipariş var
+ör: son 3 ay kaç sipariş var
+-:dıstınct yok
+ör: bu yıl kaç farklı müşteri sipariş verdi
+-:join yapısı yok
+ör: bu yıl kaç müşteri en az 1 sipariş verdi
+-: created_at tablo yoksa patlar
+ör: bu yıl kaç ürün eklendi (eğer productsa created_at yoksa)
+-: çoklu zaman şartı
+ör: 2025 te son 3 ayda kaç sipariş var (elif yapısı yüzünden sadece 1 ini algılar)
+
+SUM:
++: orders için hesaplıyor
+ör: bu yıl toplam sipariş tutarı ne kadaar
++: zaman filtreleri
+ör: 2025 martta toplam sipariş tutarı ne kadar
+-: toplam adet (orders_item) için işlemedik
+ör: bu ay toplam kaç ürün satıldı
+-:çaprım için join
+ör: bu ay toplam gelir ne kadar (quantity * price)
+-: müşteri bazlı toplamlar
+ör: beyzanın bu yıl toplam harcaması ne kadar
+-:grup bazlı sorgular
+ör: aylara göre toplam ciro nedir (GROUP BY YAPISI YOK)
+
+LIST:
+-: sıralama
+ör: son eklenen musteriler
+-:sayı kontrolu
+ör: ilk 5 siparişi göster
+-: kolon seçimi yok
+ör: müşterilerinin soyadlarını göster
+-: join gerektiren listeler
+ör: siaprisleri musterileriyle listele
+-: koşullar
+ör: 10 tl üzeri olanları listele
+-: grup
+ör: aylara göre siparişleri listele
