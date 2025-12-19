@@ -16,6 +16,13 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
     if not table: #tablo yoksa sonuç dönme
         return None
     
+    # !!!! EN BAŞA BURAYA ALDIM KOD TEKRARI VE HATASI OLMASIN DİYE
+    where_clauses = build_time_where_clauses(
+        year=year,
+        specific_date=specific_date,
+        interval_months=interval_months,
+        relative_time=relative_time
+    )
 
     if intent == "count":
         if distinct and table == "orders":
@@ -31,13 +38,6 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
             # "Bu yıl kaç sipariş var?" -> Buraya düşecek
             sql = f"SELECT COUNT(*) AS count FROM {table}"
 
-        where_clauses = build_time_where_clauses(
-            year=year,
-            specific_date=specific_date,
-            interval_months=interval_months,
-            relative_time=relative_time
-)
-
         if where_clauses: #join bir listenin elemanları arasına bir şey koyar
             sql += " WHERE " + " AND ".join(where_clauses)
         #ÖR:
@@ -50,36 +50,34 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
 
     if intent == "list":
         sql = f"SELECT * FROM {table}"
-
-        where_clauses = build_time_where_clauses(
-            year=year,
-            specific_date=specific_date,
-            interval_months=interval_months,
-            relative_time=relative_time
-    )
-
-    if where_clauses:
-        sql += " WHERE " + " AND ".join(where_clauses)
+        
+        if where_clauses:
+            sql += " WHERE " + " AND ".join(where_clauses)
 
         sql += " LIMIT 10;"
         return sql
 
     
     if intent == "sum":
-        if table != "orders":
-            return None
-        
-        #SUM(total_count) -> o kolondaki tüm değerleri toplar
-        #!!!!!!!!!COALESCE -> EĞER SAYI NULL İSE YERİNE ŞUNU KOY
-        #DİYELIM KI 2030 YILINDAN HİÇ SİPARİŞ YOK SONUÇ 0 VEYA NONE DÖNMEZ NULL DÖNER NULL KÖTÜ ÇIKTI
-        sql = "SELECT COALESCE(SUM(total_amount), 0) AS total_amount FROM orders" #eğer null ise git onun yerine 0 koy
+        column = ""
 
-        where_clauses = build_time_where_clauses(
-            year=year,
-            specific_date=specific_date,
-            interval_months=interval_months,
-            relative_time=relative_time
-    )
+        #sipariş tutarı (ciro)
+        if table == "orders":
+            sql = "SELECT COALESCE(SUM(total_amount), 0) AS total_sum FROM orders"
+
+        #satılan ürün adedi
+        elif table == "order_items":
+            #tarih bilgisini 'orders' tablosundan almak için JOIN yapıyoruz
+            sql = "SELECT COALESCE(SUM(order_items.quantity), 0) AS total_sum FROM order_items"
+            sql += " JOIN orders ON order_items.order_id = orders.id"
+            
+        #ürün fiyatları (Örn: Depo değeri)
+        elif table == "products":
+            sql = "SELECT COALESCE(SUM(price), 0) AS total_sum FROM products"
+            
+        # Eğer yukarıdaki tablolardan biri değilse (Örn: Müşteriler) toplama yapılamaz
+        else:
+            return None
 
         if where_clauses:
             sql += " WHERE " + " AND ".join(where_clauses)
