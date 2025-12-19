@@ -3,7 +3,7 @@ from where_c import build_time_where_clauses
 # intent + tablo bilgisini alır ve SQL cümlesine dönüştürür
 #neden bazı parametreler none?
 #çünkü kullanıcı örneğin her zaman bir parametre belirtmez kaç müşteri var der zaman belli değildir
-def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False) -> str | None:
+def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False, customer_name=None) -> str | None:
     """
     Parametreler:
     - intent: count, list vb.
@@ -21,7 +21,8 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
         year=year,
         specific_date=specific_date,
         interval_months=interval_months,
-        relative_time=relative_time
+        relative_time=relative_time,
+        customer_name=customer_name
     )
 
     if intent == "count":
@@ -59,11 +60,15 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
 
     
     if intent == "sum":
-        column = ""
+        sql = ""
 
         #sipariş tutarı (ciro)
         if table == "orders":
-            sql = "SELECT COALESCE(SUM(total_amount), 0) AS total_sum FROM orders"
+            sql = "SELECT COALESCE(SUM(orders.total_amount), 0) AS total_sum FROM orders"
+
+            # Eğer isim varsa CUSTOMERS tablosuna bağlan!
+            if customer_name:
+                sql += " JOIN customers ON orders.customer_id = customers.id"
 
         #satılan ürün adedi
         elif table == "order_items":

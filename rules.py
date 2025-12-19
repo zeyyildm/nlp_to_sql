@@ -103,3 +103,17 @@ def detect_time_filter(text: str): #bu ay ve geçen ay ifadelerini yakalar
 def detect_order_context(text: str) -> bool:
     keywords = {"sipariş", "siparis", "alısveris", "alisveris", "satin", "satın", "verdi", "alan"}
     return any(word in text for word in keywords)
+
+#isimlerdeki nın nin siler ismi çeker
+def extract_customer_name(text: str):
+    words = text.split()
+    for word in words:
+        # 3 harfli ekler (nin, nın, nun, nün)
+        if len(word) > 3 and (word.endswith("nin") or word.endswith("nin") or word.endswith("nun") or word.endswith("nun")):
+             return word[:-3] 
+        
+        # 2 harfli ekler (in, in, un, un)
+        if len(word) > 2 and (word.endswith("in") or word.endswith("in") or word.endswith("un") or word.endswith("un")):
+             return word[:-2]
+             
+    return None

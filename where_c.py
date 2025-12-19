@@ -2,7 +2,8 @@ def build_time_where_clauses(
     year=None,
     specific_date=None,
     interval_months=None,
-    relative_time=None
+    relative_time=None,
+    customer_name=None
 ):
     where_clauses = []
 
@@ -25,6 +26,10 @@ def build_time_where_clauses(
 
     elif year:
         where_clauses.append(f"EXTRACT(YEAR FROM created_at) = {year}")
+
+    if customer_name:
+        # İsim eşleşmesi (Büyük/Küçük harf duyarsız)
+        where_clauses.append(f"customers.first_name ILIKE '{customer_name}'")
 
     return where_clauses
 

@@ -1,5 +1,5 @@
 from rules import extract_year, extract_month_year, extract_interval, detect_time_filter, detect_distinct #zaman bilgileri için
-from rules import normalize, find_intent, find_entity, detect_order_context
+from rules import normalize, find_intent, find_entity, detect_order_context, extract_customer_name
 from sql_generator import generate_sql
 from db import run_query
 
@@ -29,11 +29,13 @@ while True: #program sürekli devam etsin
     date_info = extract_month_year(normalized) #ay+yıl ikilisi bulunur
     interval_num = extract_interval(normalized) #cümledeki zaman aralığı, son 3 ay gibi bulur
     rel_time = detect_time_filter(normalized) #bu ay, geçen ay
+    cust_name = extract_customer_name(normalized)
 
     print("Normalize edilmiş:", normalized)
     print("Tespit edilen intent:", intent)
     print("Tespit edilen tablo:", entity)
     print(f"Zaman Bilgileri -> Yıl: {year_info} | Özel Tarih: {date_info} | Aralık: {interval_num} | Göreceli: {rel_time}")
+    print(f"Tespit Edilen İsim: {cust_name}")  
 
     sql = generate_sql(
         intent, 
