@@ -97,3 +97,8 @@ def detect_time_filter(text: str): #bu ay ve geçen ay ifadelerini yakalar
         if any(k in text for k in keywords):
             return time_key
     return None
+
+#cümlede sipariş vermekle ilgili bir bağlam var mı bakar -> Örn: 'sipariş veren', 'sipariş verdi', 'alışveriş yapan'
+def detect_order_context(text: str) -> bool:
+    keywords = {"sipariş", "siparis", "alısveris", "alisveris", "satin", "satın", "verdi", "alan"}
+    return any(word in text for word in keywords)

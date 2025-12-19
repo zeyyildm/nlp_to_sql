@@ -1,5 +1,5 @@
 from rules import extract_year, extract_month_year, extract_interval, detect_time_filter, detect_distinct #zaman bilgileri için
-from rules import normalize, find_intent, find_entity
+from rules import normalize, find_intent, find_entity, detect_order_context
 from sql_generator import generate_sql
 from db import run_query
 
@@ -16,6 +16,15 @@ while True: #program sürekli devam etsin
     entity = find_entity(normalized)
     if intent == "unknown" and entity is not None:
         intent = "list"
+
+    distinct_flag = detect_distinct(normalized)
+    is_order_context = detect_order_context(normalized) # Sipariş bağlamı var mı?
+    # Eğer konu "müşteri" ise AMA "sipariş"ten bahsediliyorsa,
+    # Aslında biz 'orders' tablosuna bakmalıyız ve 'distinct' saymalıyız.
+    if entity == "customers" and is_order_context:
+        entity = "orders"   # Tabloyu değiştir
+        distinct_flag = True # Farklı müşterileri sayması için bayrağı kaldır
+    
     year_info = extract_year(normalized) #cümledeki yıl bulunur
     date_info = extract_month_year(normalized) #ay+yıl ikilisi bulunur
     interval_num = extract_interval(normalized) #cümledeki zaman aralığı, son 3 ay gibi bulur

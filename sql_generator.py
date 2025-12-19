@@ -15,22 +15,21 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
     """
     if not table: #tablo yoksa sonuç dönme
         return None
+    
 
     if intent == "count":
-        # Eğer müşteri sayısı soruluyorsa ve zaman filtresi varsa, 
-        # orders tablosundan DISTINCT customer_id ile saymalıyız
-        # Çünkü müşteri ilk sipariş verdiğinde görülür
-        has_time_filter = year or specific_date or interval_months or relative_time
-        
-        if table == "customers" and has_time_filter:
-            # Müşteri sayısı + zaman filtresi = orders tablosundan DISTINCT ile say
+        if distinct and table == "orders":
+             # "Bu yıl kaç müşteri sipariş verdi?" -> Buraya düşecek
             sql = "SELECT COUNT(DISTINCT customer_id) AS count FROM orders"
-        elif distinct and table == "orders":
-            # DISTINCT isteniyorsa ve sipariş üzerinden müşteri sayacağız:
-            sql = "SELECT COUNT(DISTINCT customer_id) AS count FROM orders"
+            
+        elif distinct and table == "order_items":
+             # "Kaç farklı ürün satıldı?"
+            sql = "SELECT COUNT(DISTINCT product_id) AS count FROM order_items"
+            
         else:
+            # "Bu yıl kaç müşteri kayıt oldu?" -> Buraya düşecek (Table=customers kalacak)
+            # "Bu yıl kaç sipariş var?" -> Buraya düşecek
             sql = f"SELECT COUNT(*) AS count FROM {table}"
-
 
         where_clauses = build_time_where_clauses(
             year=year,

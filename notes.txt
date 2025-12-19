@@ -17,6 +17,7 @@ source .venv/bin/activate env aktif etme
 5- env problemi çözüldü
 6- basit list yapıldı
 7- basit sum yaıldı
+8- bağlama göre tablo seçiliyor artık (kaç müşteri kayıt oldu, kaç müşteri sipariş verdi)
 
 //NELER YAPILACAK
 
