@@ -56,13 +56,13 @@ SUM:
 ör: aylara göre toplam ciro nedir (GROUP BY YAPISI YOK)
 
 LIST:
-+: sıralama TAMAMLADIM
++: sıralama  TAMAMLADIM
 ör: son eklenen musteriler
-+:sayı kontrolu  TAMAMLADIM
++:sayı kontrolu   TAMAMLADIM
 ör: ilk 5 siparişi göster 
-+: kolon seçimi yok TAMAMLADIM
++: kolon seçimi yok  TAMAMLADIM
 ör: müşterilerinin soyadlarını göster
--: join gerektiren listeler
++: join gerektiren listeler  TAMAMLADIM
 ör: siaprisleri musterileriyle listele
 -: koşullar
 ör: 10 tl üzeri olanları listele

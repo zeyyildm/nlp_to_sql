@@ -20,7 +20,6 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
     # Hem sıralama (ORDER BY) için hem de Filtreleme (WHERE) için gerekli.
     # Eğer bunu yapmazsak "created_at" hangi tabloda diye hata verir.
     target_date_col = "created_at"
-    
     if table == "orders" or table == "order_items":
         target_date_col = "orders.created_at"
     elif table == "customers":
@@ -71,8 +70,24 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
             sql = f"SELECT * FROM {table}" 
 
         # JOIN
-        if customer_name and table == "orders":
+        need_join = False
+        
+            # A) Eğer isim filtresi varsa (Örn: Beyzanın siparişleri) -> JOIN lazım
+        if customer_name:
+            need_join = True
+            
+            # B) Eğer seçilen kolonlar 'müşteri bilgisi' içeriyorsa -> JOIN lazım
+        if selected_columns:
+            if "name" in selected_columns or "email" in selected_columns:
+                need_join = True
+        
+            # Karar verildiyse JOIN ekle
+        if table == "orders" and need_join:
             sql += " JOIN customers ON orders.customer_id = customers.id"
+
+        #WHERE
+        if where_clauses:
+            sql += " WHERE " + " AND ".join(where_clauses)
 
         # SIRALAMA (ORDER BY)
         if order_dir:
@@ -80,7 +95,6 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
             
             if table == "products": # İstisna: Ürünlerde tarih yoksa fiyata göre sırala
                 sort_col = "price" 
-            
             sql += f" ORDER BY {sort_col} {order_dir}"
             
         elif table == "orders": 
