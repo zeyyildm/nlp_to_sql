@@ -3,7 +3,7 @@ from where_c import build_time_where_clauses
 # intent + tablo bilgisini alır ve SQL cümlesine dönüştürür
 #neden bazı parametreler none?
 #çünkü kullanıcı örneğin her zaman bir parametre belirtmez kaç müşteri var der zaman belli değildir
-def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False, customer_name=None) -> str | None:
+def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False, customer_name=None, limit=10, order_dir=None) -> str | None:
     """
     Parametreler:
     - intent: count, list vb.
@@ -16,6 +16,17 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
     if not table: #tablo yoksa sonuç dönme
         return None
     
+    # TARİH KOLONUNU BELİRLEMEK
+    # Hem sıralama (ORDER BY) için hem de Filtreleme (WHERE) için gerekli.
+    # Eğer bunu yapmazsak "created_at" hangi tabloda diye hata verir.
+    target_date_col = "created_at"
+    
+    if table == "orders" or table == "order_items":
+        target_date_col = "orders.created_at"
+    elif table == "customers":
+        target_date_col = "customers.created_at"
+
+
     # !!!! EN BAŞA BURAYA ALDIM KOD TEKRARI VE HATASI OLMASIN DİYE
     where_clauses = build_time_where_clauses(
         year=year,
@@ -52,12 +63,27 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
     if intent == "list":
         sql = f"SELECT * FROM {table}"
         
+        if customer_name and table == "orders": #Eğer tablo orders ise ve isim filtresi varsa JOIN lazım
+            sql += " JOIN customers ON orders.customer_id = customers.id"
+
         if where_clauses:
             sql += " WHERE " + " AND ".join(where_clauses)
 
-        sql += " LIMIT 10;"
-        return sql
+        # SIRALAMA (ORDER BY)
+        if order_dir:
+            sort_col = target_date_col  #Varsayılan olarak belirlenen tarih kolonuna göre sırala
+            
+            if table == "products": # İstisna: Ürünlerde tarih yoksa fiyata göre sırala
+                sort_col = "price" 
+            
+            sql += f" ORDER BY {sort_col} {order_dir}"
+            
+        elif table == "orders": 
+             sql += f" ORDER BY {target_date_col} DESC" # Kullanıcı bir şey demese bile siparişleri tarihe göre (YENİDEN ESKİYE) sırala
 
+        # LİMİT
+        sql += f" LIMIT {limit};"
+        return sql
     
     if intent == "sum":
         sql = ""

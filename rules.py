@@ -117,3 +117,25 @@ def extract_customer_name(text: str):
              return word[:-2]
              
     return None
+
+
+def extract_limit_and_order(text: str): #limit sayısını ve sıralama yönünü bulur
+    limit = 10 # Varsayılan limitimiz
+    order = None
+
+    # limit sayısını bulma, Regex: "ilk 5", "son 10", "5 tane", "5 adet"
+    match = re.search(r'\b(\d+)\s*(?:tane|adet|sipariş|kayıt|müşteri|ürün)?\b', text)
+    
+    #eğer sayı bulduysak ve bu sayı yıl değilse 
+    if match:
+        num = int(match.group(1))
+        if num < 1000: 
+            limit = num
+
+    if "son" in text or "yeni" in text: #sıralama yönünü bulma: azalan yani en yeniden eskiye
+        order = "DESC"
+
+    elif "ilk" in text or "eski" in text: #ilk beş derken genelde en üstteki 5 kastedilir
+        if "eski" in text: #ama eski ASCdir
+            order = "ASC"
+    return limit, order
