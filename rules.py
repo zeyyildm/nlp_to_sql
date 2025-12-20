@@ -139,3 +139,30 @@ def extract_limit_and_order(text: str): #limit sayısını ve sıralama yönün�
         if "eski" in text: #ama eski ASCdir
             order = "ASC"
     return limit, order
+
+COLUMN_MAPPING = { #kullanıcının dediği kelime -> veritabanındaki sütun adı
+    "ad": "name",
+    "isim": "name",
+    "soyad": "name", 
+    "adsoyad": "name",
+    "mail": "email",
+    "eposta": "email",
+    "fiyat": "price",
+    "tutar": "total_amount",
+    "miktar": "quantity",
+    "adet": "quantity",
+    "tarih": "created_at",
+    "zaman": "created_at"
+}
+
+def extract_columns(text: str):
+    selected_cols = []
+    
+    words = text.split()
+    for word in words:
+        for key, col_name in COLUMN_MAPPING.items(): #kelimenin kökü sözlükte var mı kontrol eder
+            if key in word:
+                if col_name not in selected_cols: #aynı kolonu iki kere ekleme
+                    selected_cols.append(col_name)
+    
+    return selected_cols if selected_cols else None

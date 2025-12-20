@@ -60,7 +60,7 @@ LIST:
 ör: son eklenen musteriler
 +:sayı kontrolu  TAMAMLADIM
 ör: ilk 5 siparişi göster 
--: kolon seçimi yok
++: kolon seçimi yok TAMAMLADIM
 ör: müşterilerinin soyadlarını göster
 -: join gerektiren listeler
 ör: siaprisleri musterileriyle listele

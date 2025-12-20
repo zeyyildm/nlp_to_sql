@@ -3,7 +3,7 @@ from where_c import build_time_where_clauses
 # intent + tablo bilgisini alır ve SQL cümlesine dönüştürür
 #neden bazı parametreler none?
 #çünkü kullanıcı örneğin her zaman bir parametre belirtmez kaç müşteri var der zaman belli değildir
-def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False, customer_name=None, limit=10, order_dir=None) -> str | None:
+def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False, customer_name=None, limit=10, order_dir=None, selected_columns=None) -> str | None:
     """
     Parametreler:
     - intent: count, list vb.
@@ -63,11 +63,16 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
     if intent == "list":
         sql = f"SELECT * FROM {table}"
         
-        if customer_name and table == "orders": #Eğer tablo orders ise ve isim filtresi varsa JOIN lazım
-            sql += " JOIN customers ON orders.customer_id = customers.id"
+        #SELECT : Kolon seçimi 
+        if selected_columns:
+            cols = ", ".join(selected_columns) # ['name', 'email'] -> "name, email"
+            sql = f"SELECT {cols} FROM {table}"
+        else:
+            sql = f"SELECT * FROM {table}" 
 
-        if where_clauses:
-            sql += " WHERE " + " AND ".join(where_clauses)
+        # JOIN
+        if customer_name and table == "orders":
+            sql += " JOIN customers ON orders.customer_id = customers.id"
 
         # SIRALAMA (ORDER BY)
         if order_dir:

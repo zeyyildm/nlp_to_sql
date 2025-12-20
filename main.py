@@ -1,5 +1,5 @@
 from rules import extract_year, extract_month_year, extract_interval, detect_time_filter, detect_distinct #zaman bilgileri için
-from rules import normalize, find_intent, find_entity, detect_order_context, extract_customer_name, extract_limit_and_order
+from rules import normalize, find_intent, find_entity, detect_order_context, extract_customer_name, extract_limit_and_order, extract_columns
 from sql_generator import generate_sql
 from db import run_query
 
@@ -34,10 +34,9 @@ while True: #program sürekli devam etsin
     interval_num = extract_interval(normalized) #cümledeki zaman aralığı, son 3 ay gibi bulur
     rel_time = detect_time_filter(normalized) #bu ay, geçen ay
     cust_name = extract_customer_name(normalized)
-
-    # --- YENİ EKLENEN KISIM: Limit ve Sıralama ---
-    limit_num, order_direction = extract_limit_and_order(normalized)
-
+    limit_num, order_direction = extract_limit_and_order(normalized) #limit ve sıralama
+    cols = extract_columns(normalized) #kolonları çıkarır
+    
     print("Normalize edilmiş:", normalized)
     print("Tespit edilen intent:", intent)
     print("Tespit edilen tablo:", entity)
@@ -52,7 +51,8 @@ while True: #program sürekli devam etsin
         relative_time=rel_time,
         distinct=distinct_flag,
         limit=limit_num,
-        order_dir=order_direction
+        order_dir=order_direction,
+        selected_columns=cols
         )
 
     if sql:
