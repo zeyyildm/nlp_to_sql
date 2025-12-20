@@ -164,3 +164,29 @@ def extract_limit_and_order(text: str): #limit sayısını ve sıralama yönün�
             order = "ASC"
     return limit, order
 
+def extract_numeric_condition(text: str):
+    operator = None
+    value = None
+
+    # 1. BÜYÜKTÜR DURUMU 
+    match_gt = re.search(r'(\d+)\s*(?:tl|lira|dolar|euro|birim|adet)?\s*(?:üzeri|uzeri|fazla|yuksek|büyük|buyuk|den cok|den çok)', text)
+    if match_gt:
+        value = int(match_gt.group(1))
+        operator = ">"
+        return operator, value
+
+    # 2. KÜÇÜKTÜR DURUMU 
+    match_lt = re.search(r'(\d+)\s*(?:tl|lira|dolar|euro|birim|adet)?\s*(?:altı|alti|az|düşük|dusuk|den az|den kucuk|den küçük)', text)
+    if match_lt:
+        value = int(match_lt.group(1))
+        operator = "<"
+        return operator, value
+        
+    # 3. EŞİTTİR DURUMU (=)
+    match_eq = re.search(r'(\d+)\s*(?:tl|lira|dolar|euro|birim|adet)?\s*(?:olan|esit|eşit)', text)
+    if match_eq:
+        value = int(match_eq.group(1))
+        operator = "="
+        return operator, value
+
+    return None, None

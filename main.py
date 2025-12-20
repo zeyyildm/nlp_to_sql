@@ -1,5 +1,5 @@
 from rules import extract_year, extract_month_year, extract_interval, detect_time_filter, detect_distinct #zaman bilgileri için
-from rules import normalize, find_intent, find_entity, detect_order_context, extract_customer_name, extract_limit_and_order, extract_columns
+from rules import normalize, find_intent, find_entity, detect_order_context, extract_customer_name, extract_limit_and_order, extract_columns, extract_numeric_condition
 from sql_generator import generate_sql
 from db import run_query
 
@@ -36,6 +36,7 @@ while True: #program sürekli devam etsin
     cust_name = extract_customer_name(normalized)
     limit_num, order_direction = extract_limit_and_order(normalized) #limit ve sıralama
     cols = extract_columns(normalized) #kolonları çıkarır
+    cond_op, cond_val = extract_numeric_condition(normalized) #koşul
     
     print("Normalize edilmiş:", normalized)
     print("Tespit edilen intent:", intent)
@@ -52,7 +53,8 @@ while True: #program sürekli devam etsin
         distinct=distinct_flag,
         limit=limit_num,
         order_dir=order_direction,
-        selected_columns=cols
+        selected_columns=cols,
+        condition=(cond_op, cond_val)
         )
 
     if sql:

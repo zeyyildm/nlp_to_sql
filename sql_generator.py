@@ -3,7 +3,7 @@ from where_c import build_time_where_clauses
 # intent + tablo bilgisini alır ve SQL cümlesine dönüştürür
 #neden bazı parametreler none?
 #çünkü kullanıcı örneğin her zaman bir parametre belirtmez kaç müşteri var der zaman belli değildir
-def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False, customer_name=None, limit=10, order_dir=None, selected_columns=None) -> str | None:
+def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False, customer_name=None, limit=10, order_dir=None, selected_columns=None, condition=None) -> str | None:
     """
     Parametreler:
     - intent: count, list vb.
@@ -35,6 +35,21 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
         customer_name=customer_name
     )
 
+    # KOŞUL
+    if condition and condition[0] and condition[1]:
+        operator, value = condition
+        filter_col = ""  #hangi kolonu filtrelicez
+        if table == "orders":
+            filter_col = "orders.total_amount"
+        elif table == "products":
+            filter_col = "price"
+        elif table == "order_items":
+            filter_col = "quantity"
+            
+        if filter_col:
+            where_clauses.append(f"{filter_col} {operator} {value}")
+
+    #COUNT
     if intent == "count":
         if distinct and table == "orders":
              # "Bu yıl kaç müşteri sipariş verdi?" -> Buraya düşecek

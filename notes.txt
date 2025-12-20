@@ -64,7 +64,7 @@ LIST:
 ör: müşterilerinin soyadlarını göster
 +: join gerektiren listeler  TAMAMLADIM
 ör: siaprisleri musterileriyle listele
--: koşullar
-ör: 10 tl üzeri olanları listele
++: koşullar  TAMAMLADIM
+ör: 10 tl üzeri olanları listele 
 -: grup
 ör: aylara göre siparişleri listele
