@@ -23,6 +23,14 @@ while True: #program sürekli devam etsin
 
     distinct_flag = detect_distinct(normalized)
     is_order_context = detect_order_context(normalized) # Sipariş bağlamı var mı?
+    
+    # Özel durumlar: "ürün satıldı" -> order_items, "ürün eklendi" -> products
+    if "urun" in normalized or "ürün" in normalized:
+        if "satildi" in normalized or "satilan" in normalized or "satildi" in normalized:
+            entity = "order_items"  # Ürün satıldı -> order_items
+        elif "eklendi" in normalized:
+            entity = "products"  # Ürün eklendi -> products
+    
     # Eğer konu "müşteri" ise AMA "sipariş"ten bahsediliyorsa,
     # Aslında biz 'orders' tablosuna bakmalıyız ve 'distinct' saymalıyız.
     if entity == "customers" and is_order_context:

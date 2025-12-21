@@ -13,11 +13,14 @@ CREATE TABLE customers (
 );
 
 -- 2. Ürünler Tablosu
+-- 2. Ürünler Tablosu
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100),
-    price NUMERIC(10, 2)
+    price NUMERIC(10, 2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- 3. Siparişler Tablosu
 CREATE TABLE orders (

@@ -13,9 +13,9 @@ def normalize(text: str) -> str: #test kullanıcıdan gelen str temizlenmiş hal
 ENTITY_KEYWORDS = { #TEXT HANGI TABLOYU SORUYOR
     "customers": {"müşteri", "kullanıcı", "üye", "kayıt", "insan", "musteri", "kullanici", "uye", "kayit"},
     "orders": {"sipariş", "satış", "işlem", "siparis", "satis", "islem", "harcama", "ciro", "tutar", "gelir"},
-    "products": {"ürün", "item", "mal", "esya", "eşya", "fiyat"},
+    "products": {"ürün", "urun", "item", "mal", "esya", "eşya", "esya", "fiyat", "eklendi"},
     "order_items": {"adet", "miktar", "kalem", "ürün adeti", "ürünadeti", "urun adeti", "urun adetı", "urun adetı",
-                    "satılan", "satilan", "satış adedi", "satis adedi"},
+                    "satılan", "satilan", "satildi", "satıldı", "satış adedi", "satis adedi", "urun satildi", "ürün satıldı"},
 }
 
 INTENT_KEYWORDS = { #sözlükle beraber niyet eşleştirmesi yapacağız
@@ -50,6 +50,7 @@ COLUMN_MAPPING = { #kullanıcının dediği kelime -> veritabanındaki sütun ad
     "adsoyad": "name",
     "mail": "email",
     "eposta": "email",
+    "email":"email",
     "fiyat": "price",
     "tutar": "total_amount",
     "miktar": "quantity",
@@ -124,20 +125,26 @@ def detect_time_filter(text: str): #bu ay ve geçen ay ifadelerini yakalar
     return None
 
 #cümlede sipariş vermekle ilgili bir bağlam var mı bakar -> Örn: 'sipariş veren', 'sipariş verdi', 'alışveriş yapan'
+#cümlede müşteri geçiyor ama bu cümle sipariş ile mi ilgili
 def detect_order_context(text: str) -> bool:
-    keywords = {"sipariş", "siparis", "alısveris", "alisveris", "satin", "satın", "verdi", "alan"}
-    return any(word in text for word in keywords)
+    # müşteri sorusunu orders'a kaydıracak güçlü ifadeler
+    strong_phrases = [
+        "siparis verdi", "siparis veren", "siparis yapan",
+        "en az 1 siparis", "en az bir siparis",
+        "alisveris yapan", "alisveris etti", "satin aldi", "satin alan"
+    ]
+    return any(p in text for p in strong_phrases)
 
 #isimlerdeki nın nin siler ismi çeker
 def extract_customer_name(text: str):
     words = text.split()
     for word in words:
         # 3 harfli ekler (nin, nın, nun, nün)
-        if len(word) > 3 and (word.endswith("nin") or word.endswith("nin") or word.endswith("nun") or word.endswith("nun")):
+        if len(word) > 3 and (word.endswith("nin") or word.endswith("nın") or word.endswith("nun") or word.endswith("nün")):
              return word[:-3] 
         
         # 2 harfli ekler (in, in, un, un)
-        if len(word) > 2 and (word.endswith("in") or word.endswith("in") or word.endswith("un") or word.endswith("un")):
+        if len(word) > 2 and (word.endswith("in") or word.endswith("ın") or word.endswith("un") or word.endswith("ün")):
              return word[:-2]
              
     return None
@@ -170,6 +177,9 @@ def extract_numeric_condition(text: str):
 
     # 1. BÜYÜKTÜR DURUMU 
     match_gt = re.search(r'(\d+)\s*(?:tl|lira|dolar|euro|birim|adet)?\s*(?:üzeri|uzeri|fazla|yuksek|büyük|buyuk|den cok|den çok)', text)
+    # (\d+) -> bir veya daha fazla rakam yakalar. parantez olduğundan group(1) ile yakalayıyoruz
+    # \s* -> sayıdan sonra boşluk olabilir veya olmayabilir
+    # (?:tl|...) -> opsiyonel olaral tl adet gibi birim. burası bir grup ama yaklama yok
     if match_gt:
         value = int(match_gt.group(1))
         operator = ">"

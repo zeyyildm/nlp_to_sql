@@ -13,32 +13,44 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
     - interval_months: Son kaç ay olduğu (Örn: 3)
     - relative_time: 'this_month' veya 'last_month'
     """
-    if not table: #tablo yoksa sonuç dönme
+    if not table: #tablo yoksa sonuç dönme. güvenli şekilde sql üretmiyorum demek
         return None
     
     # TARİH KOLONUNU BELİRLEMEK
     # Hem sıralama (ORDER BY) için hem de Filtreleme (WHERE) için gerekli.
     # Eğer bunu yapmazsak "created_at" hangi tabloda diye hata verir.
     target_date_col = "created_at"
-    if table == "orders" or table == "order_items":
+    has_date_column = True  # Tabloda created_at var mı?
+    
+    if table == "orders":
         target_date_col = "orders.created_at"
+    elif table == "order_items":
+        target_date_col = "orders.created_at"  # order_items'da tarih yok, orders'dan alınacak
     elif table == "customers":
         target_date_col = "customers.created_at"
-
+    elif table == "products":
+        target_date_col = "products.created_at"
 
     # !!!! EN BAŞA BURAYA ALDIM KOD TEKRARI VE HATASI OLMASIN DİYE
+    # Eğer tarih kolonu yoksa ve zaman filtresi varsa, hata döndür
+    if not has_date_column and (year or specific_date or interval_months or relative_time):
+        return None  # Products tablosunda tarih filtresi kullanılamaz
+    
     where_clauses = build_time_where_clauses(
         year=year,
         specific_date=specific_date,
         interval_months=interval_months,
         relative_time=relative_time,
-        customer_name=customer_name
+        customer_name=customer_name,
+        date_column=target_date_col
     )
 
-    # KOŞUL
+    # KOŞUL -> 1000 tl ve üzeri gibi ifadeler için (">", 1000) gelir
+    # operator = ">"
+    #value = 1000
     if condition and condition[0] and condition[1]:
         operator, value = condition
-        filter_col = ""  #hangi kolonu filtrelicez
+        filter_col = ""  #bu value hangi sütunla karşılaştırılacak
         if table == "orders":
             filter_col = "orders.total_amount"
         elif table == "products":
@@ -46,23 +58,43 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
         elif table == "order_items":
             filter_col = "quantity"
             
-        if filter_col:
-            where_clauses.append(f"{filter_col} {operator} {value}")
+        if filter_col: #gerçekten bir kolon seçilmiş mi diye bakar
+            where_clauses.append(f"{filter_col} {operator} {value}") #bunu da gider where clause olarak ekler
 
     #COUNT
+
+    distinct_col_map = {
+    "orders": "customer_id",
+    "order_items": "product_id",
+    "customers": "id",
+    "products": "id"
+    }
     if intent == "count":
-        if distinct and table == "orders":
-             # "Bu yıl kaç müşteri sipariş verdi?" -> Buraya düşecek
-            sql = "SELECT COUNT(DISTINCT customer_id) AS count FROM orders"
-            
-        elif distinct and table == "order_items":
-             # "Kaç farklı ürün satıldı?"
-            sql = "SELECT COUNT(DISTINCT product_id) AS count FROM order_items"
-            
+        # JOIN gerekip gerekmediğini belirle
+        # order_items için zaman filtresi varsa veya distinct kullanılıyorsa JOIN gerekir
+        need_join = False
+        
+        if table == "order_items":
+            # Zaman filtresi varsa veya distinct kullanılıyorsa JOIN gerekir
+            if where_clauses or distinct:
+                need_join = True
+        
+        # COUNT sorgusu oluştur
+        if distinct:
+            col = distinct_col_map.get(table)
+            if not col:
+                return None
+            # JOIN varsa kolon adını tablo prefix'i ile belirt
+            if need_join and table == "order_items":
+                sql = f"SELECT COUNT(DISTINCT order_items.{col}) AS count FROM {table}"
+            else:
+                sql = f"SELECT COUNT(DISTINCT {col}) AS count FROM {table}"
         else:
-            # "Bu yıl kaç müşteri kayıt oldu?" -> Buraya düşecek (Table=customers kalacak)
-            # "Bu yıl kaç sipariş var?" -> Buraya düşecek
             sql = f"SELECT COUNT(*) AS count FROM {table}"
+
+        # JOIN ekle (WHERE'den önce)
+        if need_join and table == "order_items":
+            sql += " JOIN orders ON order_items.order_id = orders.id"
 
         if where_clauses: #join bir listenin elemanları arasına bir şey koyar
             sql += " WHERE " + " AND ".join(where_clauses)

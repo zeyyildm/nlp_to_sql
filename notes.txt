@@ -1,5 +1,7 @@
 sanal ortam ile herkes aynı ortamı kurar. proje izolasyonu sağlanır.
 env kurma: python3 -m venv .venv
+env paket kurma: python3 -m pip install -r requirements.txt
+
 source .venv/bin/activate env aktif etme
 
 // __pycache__/: pythonun kendi oluşturduğu geçici derleme dosyası. gizlilikle alakası yok makineye özel olduğu için pushlamıyoruz.
@@ -27,44 +29,31 @@ BENZERSIZ yapısını işlemiyoruz
 top max min intentleri
 
 COUNT:
-+: basit sayma yapıyor
-ör: kaç müşteri var
-+: zaman algılıyor
-ör: bu ay kaç sipariş var
-ör: son 3 ay kaç sipariş var
--:dıstınct yok
-ör: bu yıl kaç farklı müşteri sipariş verdi
--:join yapısı yok
-ör: bu yıl kaç müşteri en az 1 sipariş verdi
--: created_at tablo yoksa patlar
-ör: bu yıl kaç ürün eklendi (eğer productsa created_at yoksa)
--: çoklu zaman şartı
-ör: 2025 te son 3 ayda kaç sipariş var (elif yapısı yüzünden sadece 1 ini algılar)
+ör: kaç müşteri var +
+ör: bu ay kaç sipariş var +
+ör: son 3 ay kaç sipariş var +
+ör: bu yıl kaç farklı müşteri sipariş verdi +
+ör: bu yıl kaç müşteri en az 1 sipariş verdi +
+ör: bu yıl kaç ürün eklendi +
+ör: 2025 te son 3 ayda kaç sipariş var +
+ör: bu yıl kaç müşteri kayıt oldu +
+ör: bu ay kaç farklı ürün satıldı +
 
 SUM:
-+: orders için hesaplıyor
-ör: bu yıl toplam sipariş tutarı ne kadaar
-+: zaman filtreleri
-ör: 2025 martta toplam sipariş tutarı ne kadar
-+: toplam adet (orders_item) için işlemedik  TAMAMLANDIM
-ör: bu ay toplam kaç ürün satıldı
-+:çaprım için join TAMAMLADIM
-ör: bu ay toplam gelir ne kadar (quantity * price)
+ör: bu yıl toplam sipariş tutarı ne kadar +
+ör: 2025 martta toplam sipariş tutarı ne kadar +
+ör: bu ay toplam kaç ürün satıldı +
+ör: bu ay toplam gelir ne kadar (quantity * price) +
 -: müşteri bazlı toplamlar
 ör: beyzanın bu yıl toplam harcaması ne kadar
 -:grup bazlı sorgular
 ör: aylara göre toplam ciro nedir (GROUP BY YAPISI YOK)
 
 LIST:
-+: sıralama  TAMAMLADIM
-ör: son eklenen musteriler
-+:sayı kontrolu   TAMAMLADIM
-ör: ilk 5 siparişi göster 
-+: kolon seçimi yok  TAMAMLADIM
-ör: müşterilerinin soyadlarını göster
-+: join gerektiren listeler  TAMAMLADIM
-ör: siaprisleri musterileriyle listele
-+: koşullar  TAMAMLADIM
-ör: 10 tl üzeri olanları listele 
+ör: son eklenen musteriler +
+ör: ilk 5 siparişi göster +
+ör: müşterilerinin soyadlarını göster +
+ör: siaprisleri musterileriyle listele +
+ör: 10 tl üzeri olanları listele  +
 -: grup
 ör: aylara göre siparişleri listele
