@@ -10,6 +10,8 @@ def normalize(text: str) -> str: #test kullanıcıdan gelen str temizlenmiş hal
 
 #SÖZLÜKLER
 
+GROUP_KEYWORDS = {"göre", "gore", "bazında", "bazinda", "dağılımı", "dagilimi"}
+
 ENTITY_KEYWORDS = { #TEXT HANGI TABLOYU SORUYOR
     "customers": {"müşteri", "kullanıcı", "üye", "kayıt", "insan", "musteri", "kullanici", "uye", "kayit"},
     "orders": {"sipariş", "satış", "işlem", "siparis", "satis", "islem", "harcama", "ciro", "tutar", "gelir"},
@@ -163,12 +165,11 @@ def extract_limit_and_order(text: str): #limit sayısını ve sıralama yönün�
         if num < 1000: 
             limit = num
 
-    if "son" in text or "yeni" in text: #sıralama yönünü bulma: azalan yani en yeniden eskiye
-        order = "DESC"
-
-    elif "ilk" in text or "eski" in text: #ilk beş derken genelde en üstteki 5 kastedilir
-        if "eski" in text: #ama eski ASCdir
-            order = "ASC"
+    # Sıralama yönü
+    if "ilk" in text or "eski" in text or "en az" in text:
+        order = "ASC" # Eskiden yeniye (İlk)
+    elif "son" in text or "yeni" in text or "en cok" in text or "en fazla" in text:
+        order = "DESC" # Yeniden eskiye (Son)
     return limit, order
 
 def extract_numeric_condition(text: str):
@@ -176,7 +177,7 @@ def extract_numeric_condition(text: str):
     value = None
 
     # 1. BÜYÜKTÜR DURUMU 
-    match_gt = re.search(r'(\d+)\s*(?:tl|lira|dolar|euro|birim|adet)?\s*(?:üzeri|uzeri|fazla|yuksek|büyük|buyuk|den cok|den çok)', text)
+    match_gt = re.search(r'(\d+)\s*(?:tl|lira|dolar|euro|birim|adet)?\s*(?:üzeri|uzeri|fazla|yuksek|büyük|buyuk|den cok|den çok|den fazla)', text)
     # (\d+) -> bir veya daha fazla rakam yakalar. parantez olduğundan group(1) ile yakalayıyoruz
     # \s* -> sayıdan sonra boşluk olabilir veya olmayabilir
     # (?:tl|...) -> opsiyonel olaral tl adet gibi birim. burası bir grup ama yaklama yok
@@ -199,4 +200,25 @@ def extract_numeric_condition(text: str):
         operator = "="
         return operator, value
 
+    return None, None
+
+
+#GROUP BY
+def extract_grouping_request(text: str):
+    """
+    Kullanıcının gruplama isteyip istemediğini anlar.
+    """
+    if not any(k in text for k in GROUP_KEYWORDS):
+        return None, None
+
+    if "aylara" in text or "aylik" in text or "ay bazinda" in text:
+        return None, "month"
+    if "yillara" in text or "yillik" in text or "yil bazinda" in text:
+        return None, "year"
+
+    if "musteri" in text or "kullanici" in text or "kisi" in text:
+        return "name", None 
+    if "urun" in text:
+        return "name", None
+            
     return None, None

@@ -3,7 +3,7 @@ from where_c import build_time_where_clauses
 # intent + tablo bilgisini alır ve SQL cümlesine dönüştürür
 #neden bazı parametreler none?
 #çünkü kullanıcı örneğin her zaman bir parametre belirtmez kaç müşteri var der zaman belli değildir
-def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False, customer_name=None, limit=10, order_dir=None, selected_columns=None, condition=None) -> str | None:
+def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False, customer_name=None, limit=10, order_dir=None, selected_columns=None, condition=None, group_by_col=None, time_group=None) -> str | None:
     """
     Parametreler:
     - intent: count, list vb.
@@ -58,18 +58,50 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
         elif table == "order_items":
             filter_col = "quantity"
             
-        if filter_col: #gerçekten bir kolon seçilmiş mi diye bakar
-            where_clauses.append(f"{filter_col} {operator} {value}") #bunu da gider where clause olarak ekler
+        if filter_col:
+             # ÖZEL DURUM: Eğer aggregate (sum) yapmıyorsak normal where ekle.
+             # Eğer aggregate yapacaksak (1000 tl üzeri harcayanlar), bunu aşağıda HAVING'e sakla.
+             if not (intent == "list" and table == "customers" and value > 50):
+                where_clauses.append(f"{filter_col} {operator} {value}")
 
     #COUNT
-
-    distinct_col_map = {
-    "orders": "customer_id",
-    "order_items": "product_id",
-    "customers": "id",
-    "products": "id"
-    }
     if intent == "count":
+    
+    # --- [YENİ: GRUPLAMA VARSA BURAYA GİR VE ÇIK] ---
+        if group_by_col or time_group:
+            select_part = "COUNT(*)"
+            group_clause = ""
+            
+            if time_group == "month":
+                select_part = f"TO_CHAR({target_date_col}, 'YYYY-MM') as donem, COUNT(*)"
+                group_clause = " GROUP BY donem ORDER BY donem"
+            elif group_by_col == "name":
+                select_part = "customers.name, COUNT(*)"
+                group_clause = " GROUP BY customers.name ORDER BY 2 DESC"
+
+            sql = f"SELECT {select_part} AS count FROM {table}"
+            
+            # Join Zorunlulukları
+            need_join = False
+            if "customers" in group_clause or customer_name: need_join = True
+            if table == "order_items": need_join = True
+
+            if need_join and table == "order_items": sql += " JOIN orders ON order_items.order_id = orders.id"
+            if (table == "orders" or table == "customers") and "customers" in group_clause: 
+                 if table == "orders": sql += " JOIN customers ON orders.customer_id = customers.id"
+                 elif table == "customers": sql = sql.replace("FROM customers", "FROM orders JOIN customers ON orders.customer_id = customers.id")
+
+            if where_clauses: sql += " WHERE " + " AND ".join(where_clauses)
+            sql += group_clause
+            return sql + ";"
+
+        distinct_col_map = {
+        "orders": "customer_id",
+        "order_items": "product_id",
+        "customers": "id",
+        "products": "id"
+        }
+    
         # JOIN gerekip gerekmediğini belirle
         # order_items için zaman filtresi varsa veya distinct kullanılıyorsa JOIN gerekir
         need_join = False
@@ -106,7 +138,20 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
         return sql + ";"
         
 
+
+    #LIST 
     if intent == "list":
+    # --- [YENİ: AGGREGATE FİLTRE (HAVING) VARSA ÖZEL İŞLEM] ---
+        # Örn: "1000 TL üzeri harcama yapan müşterileri listele"
+        if table == "customers" and condition and condition[1] and condition[1] > 50:
+             # Bu normal bir liste değil, HAVING sorgusudur.
+             op, val = condition
+             sql = f"SELECT customers.name, SUM(orders.total_amount) as toplam FROM orders JOIN customers ON orders.customer_id = customers.id"
+             if where_clauses: sql += " WHERE " + " AND ".join(where_clauses)
+             sql += f" GROUP BY customers.name HAVING SUM(orders.total_amount) {op} {val} ORDER BY toplam DESC LIMIT {limit}"
+             return sql + ";"
+    
+
         sql = f"SELECT * FROM {table}"
         
         #SELECT : Kolon seçimi 
@@ -151,7 +196,46 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
         sql += f" LIMIT {limit};"
         return sql
     
+
+
+
+    #SUM
     if intent == "sum":
+    # --- [YENİ: GRUPLAMA veya CUSTOMERS HATASI VARSA DÜZELT] ---
+        # Customers tablosunda sum yapılmaya çalışılırsa burası yakalar ve düzeltir.
+        if group_by_col or time_group or table == "customers":
+            agg_col = "orders.total_amount" # Varsayılan: Müşteri sorulsa bile sipariş topla
+            main_tbl = "orders"
+            
+            if table == "products": 
+                agg_col = "price"
+                main_tbl = "products"
+            elif table == "order_items": 
+                agg_col = "order_items.quantity"
+                main_tbl = "order_items"
+
+            select_part = f"COALESCE(SUM({agg_col}), 0)"
+            group_part = ""
+
+            if time_group == "month":
+                select_part = f"TO_CHAR({target_date_col}, 'YYYY-MM') as donem, {select_part}"
+                group_part = " GROUP BY donem ORDER BY donem"
+            elif group_by_col == "name":
+                select_part = f"customers.name, {select_part}"
+                group_part = " GROUP BY customers.name ORDER BY 2 DESC"
+
+            sql = f"SELECT {select_part} AS total_sum FROM {main_tbl}"
+            
+            # Joinler
+            if main_tbl == "orders" and (customer_name or group_by_col == "name" or table == "customers"):
+                sql += " JOIN customers ON orders.customer_id = customers.id"
+            elif main_tbl == "order_items":
+                sql += " JOIN orders ON order_items.order_id = orders.id"
+
+            if where_clauses: sql += " WHERE " + " AND ".join(where_clauses)
+            sql += group_part
+            return sql + ";"
+    
         sql = ""
 
         #sipariş tutarı (ciro)

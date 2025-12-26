@@ -1,5 +1,5 @@
 from rules import extract_year, extract_month_year, extract_interval, detect_time_filter, detect_distinct #zaman bilgileri için
-from rules import normalize, find_intent, find_entity, detect_order_context, extract_customer_name, extract_limit_and_order, extract_columns, extract_numeric_condition
+from rules import normalize, find_intent, find_entity, detect_order_context, extract_customer_name, extract_limit_and_order, extract_columns, extract_numeric_condition, extract_grouping_request
 from sql_generator import generate_sql
 from db import run_query
 
@@ -45,6 +45,7 @@ while True: #program sürekli devam etsin
     limit_num, order_direction = extract_limit_and_order(normalized) #limit ve sıralama
     cols = extract_columns(normalized) #kolonları çıkarır
     cond_op, cond_val = extract_numeric_condition(normalized) #koşul
+    group_col, time_mode = extract_grouping_request(normalized) #gruplama isteği
     
     print("Normalize edilmiş:", normalized)
     print("Tespit edilen intent:", intent)
@@ -62,7 +63,9 @@ while True: #program sürekli devam etsin
         limit=limit_num,
         order_dir=order_direction,
         selected_columns=cols,
-        condition=(cond_op, cond_val)
+        condition=(cond_op, cond_val),
+        group_by_col=group_col,
+        time_group=time_mode
         )
 
     if sql:
