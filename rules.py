@@ -58,7 +58,8 @@ COLUMN_MAPPING = { #kullanıcının dediği kelime -> veritabanındaki sütun ad
     "miktar": "quantity",
     "adet": "quantity",
     "tarih": "created_at",
-    "zaman": "created_at"
+    "zaman": "created_at",
+    "ürün": "products.name", "urun": "products.name"
 }
 
 def extract_columns(text: str):
@@ -75,14 +76,15 @@ def detect_distinct(text: str) -> bool:
     return any(k in text for k in DISTINCT_KEYWORDS)
 
 def find_intent(text: str) -> str:
-    if any(k in text for k in INTENT_KEYWORDS["top"]):
-        return "top"
-    if any(k in text for k in INTENT_KEYWORDS["sum"]):
-        return "sum"
-    if any(k in text for k in INTENT_KEYWORDS["count"]):
-        return "count"
-    if any(k in text for k in INTENT_KEYWORDS["list"]):
-        return "list"
+    # SIRALAMA ÇOK ÖNEMLİ: Önce spesifik olanlar (Max/Min), sonra genel olanlar (Sum/List)
+    if any(k in text for k in INTENT_KEYWORDS["max"]): return "max"
+    if any(k in text for k in INTENT_KEYWORDS["min"]): return "min"
+    if any(k in text for k in INTENT_KEYWORDS["top"]): return "list" # İlk 5 gibi sorgular listelemedir
+    
+    if any(k in text for k in INTENT_KEYWORDS["sum"]): return "sum"
+    if any(k in text for k in INTENT_KEYWORDS["count"]): return "count"
+    if any(k in text for k in INTENT_KEYWORDS["list"]): return "list"
+    
     return "unknown"
 
 #iflerin yapısı gereği bir önem sırası oldu sonradan bunu düzenleyebiliriz
@@ -166,10 +168,13 @@ def extract_limit_and_order(text: str): #limit sayısını ve sıralama yönün�
             limit = num
 
     # Sıralama yönü
-    if "ilk" in text or "eski" in text or "en az" in text:
-        order = "ASC" # Eskiden yeniye (İlk)
-    elif "son" in text or "yeni" in text or "en cok" in text or "en fazla" in text:
-        order = "DESC" # Yeniden eskiye (Son)
+    # ASC (Küçükten Büyüğe / Eskiden Yeniye)
+    if any(k in text for k in ["ilk", "eski", "en az", "en dusuk", "en düşük", "ucuz", "en ucuz"]):
+        order = "ASC"
+    # DESC (Büyükten Küçüğe / Yeniden Eskiye)
+    elif any(k in text for k in ["son", "yeni", "en cok", "en çok", "en fazla", "yuksek", "yüksek", "pahalı", "pahali"]):
+        order = "DESC"
+        
     return limit, order
 
 def extract_numeric_condition(text: str):
@@ -204,10 +209,7 @@ def extract_numeric_condition(text: str):
 
 
 #GROUP BY
-def extract_grouping_request(text: str):
-    """
-    Kullanıcının gruplama isteyip istemediğini anlar.
-    """
+def extract_grouping_request(text: str): #Kullanıcının gruplama isteyip istemediğini anlar.
     if not any(k in text for k in GROUP_KEYWORDS):
         return None, None
 

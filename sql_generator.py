@@ -29,7 +29,10 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
     elif table == "customers":
         target_date_col = "customers.created_at"
     elif table == "products":
-        target_date_col = "products.created_at"
+        # Ürünlerde 'created_at' olmayabilir, 'id' üzerinden işlem yapması daha güvenli.
+        # Eğer veritabanında products tablosunda tarih yoksa has_date_column=False yapıyoruz.
+        target_date_col = "id" # Varsayılan sıralama kolonu
+        has_date_column = False # Tarih filtresi (bu yıl, geçen ay) uygulanmasın
 
     # !!!! EN BAŞA BURAYA ALDIM KOD TEKRARI VE HATASI OLMASIN DİYE
     # Eğer tarih kolonu yoksa ve zaman filtresi varsa, hata döndür
@@ -45,9 +48,7 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
         date_column=target_date_col
     )
 
-    # KOŞUL -> 1000 tl ve üzeri gibi ifadeler için (">", 1000) gelir
-    # operator = ">"
-    #value = 1000
+    # KOŞUL -> 1000 tl ve üzeri gibi ifadeler için (">", 1000) gelir , operator = "> , value = 1000
     if condition and condition[0] and condition[1]:
         operator, value = condition
         filter_col = ""  #bu value hangi sütunla karşılaştırılacak
@@ -64,10 +65,29 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
              if not (intent == "list" and table == "customers" and value > 50):
                 where_clauses.append(f"{filter_col} {operator} {value}")
 
+    # MAX & MIN 
+    # Örnek: "En pahalı ürün", "En yüksek sipariş", "En düşük fiyat"
+    # "En yüksek sipariş tutarı", "En ucuz ürün" sorguları buraya düşecek
+    if intent == "max" or intent == "min":
+        agg_func = "MAX" if intent == "max" else "MIN"
+        target_col = ""
+        
+        if table == "products": target_col = "price"
+        elif table == "orders": target_col = "total_amount"
+        elif table == "order_items": target_col = "quantity"
+        
+        # Eğer uygun bir kolon yoksa (örn: müşteri max?) null dön
+        if not target_col: return None
+
+        sql = f"SELECT {agg_func}({target_col}) as sonuc FROM {table}"
+        if where_clauses: sql += " WHERE " + " AND ".join(where_clauses)
+        return sql + ";"
+
+
     #COUNT
     if intent == "count":
     
-    # --- [YENİ: GRUPLAMA VARSA BURAYA GİR VE ÇIK] ---
+    # gruplama varsa buraya gir ve çık 
         if group_by_col or time_group:
             select_part = "COUNT(*)"
             group_clause = ""
@@ -141,7 +161,7 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
 
     #LIST 
     if intent == "list":
-    # --- [YENİ: AGGREGATE FİLTRE (HAVING) VARSA ÖZEL İŞLEM] ---
+    # AGGREGATE FİLTRE (HAVING) VARSA ÖZEL İŞLEM] 
         # Örn: "1000 TL üzeri harcama yapan müşterileri listele"
         if table == "customers" and condition and condition[1] and condition[1] > 50:
              # Bu normal bir liste değil, HAVING sorgusudur.
@@ -181,18 +201,28 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
         if where_clauses:
             sql += " WHERE " + " AND ".join(where_clauses)
 
-        # SIRALAMA (ORDER BY)
+        # SIRALAMA (TOP MANTIĞI BURADA)
+        # Eğer kullanıcı "en pahalı", "en yüksek" dediyse (MAX niyeti değil LIST niyetiyle)
+        # Ve bir sıralama yönü (DESC) varsa, fiyata veya tutara göre sıralamalıyız.
         if order_dir:
-            sort_col = target_date_col  #Varsayılan olarak belirlenen tarih kolonuna göre sırala
+            sort_col = target_date_col # Varsayılan: created_at
             
-            if table == "products": # İstisna: Ürünlerde tarih yoksa fiyata göre sırala
-                sort_col = "price" 
+            # 1. Ürünler tablosuysa -> FİYAT (price) kullan
+            if table == "products": 
+                sort_col = "price"
+            
+            # 2. Siparişler tablosuysa -> TUTAR (total_amount) kullan
+            # ("En yüksek sipariş" dediğinde artık tutara göre sıralayacak)
+            elif table == "orders":
+                sort_col = "total_amount"
+                
             sql += f" ORDER BY {sort_col} {order_dir}"
             
+        # Eğer kullanıcı yön belirtmediyse (Sadece "Siparişleri listele" dediyse)
         elif table == "orders": 
-             sql += f" ORDER BY {target_date_col} DESC" # Kullanıcı bir şey demese bile siparişleri tarihe göre (YENİDEN ESKİYE) sırala
+             sql += f" ORDER BY {target_date_col} DESC" # Varsayılan: Tarih (Yeniden eskiye)
 
-        # LİMİT
+        # LİMİT (TOP 5 vb.)
         sql += f" LIMIT {limit};"
         return sql
     
@@ -201,7 +231,7 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
 
     #SUM
     if intent == "sum":
-    # --- [YENİ: GRUPLAMA veya CUSTOMERS HATASI VARSA DÜZELT] ---
+    # GRUPLAMA veya CUSTOMERS HATASI VARSA DÜZELT
         # Customers tablosunda sum yapılmaya çalışılırsa burası yakalar ve düzeltir.
         if group_by_col or time_group or table == "customers":
             agg_col = "orders.total_amount" # Varsayılan: Müşteri sorulsa bile sipariş topla

@@ -45,7 +45,7 @@ SUM:
 ör: bu ay toplam kaç ürün satıldı +
 ör: bu ay toplam gelir ne kadar (quantity * price) +
 -: müşteri bazlı toplamlar
-: beyzanın bu yıl toplam harcaması ne kadar - 
+-: beyzanın bu yıl toplam harcaması ne kadar - 
 ör: aylara göre toplam ciro nedir + 
 ör: müşterilere göre toplam harcama ne kadar +
 
@@ -57,3 +57,12 @@ LIST:
 ör: 10 tl üzeri olanları listele  +
 ör: 1000 tl üzeri harcama yapan müşterileri listele + 
 -: aylara göre siparişleri listele
+
+TOP MAX MIN:
+ör: en pahalı ürün ne kadar - 
+ör: en ucuz ürün ne kadar - 
+ör: en yüksek/en fazla sipariş tutarı ne kadar +
+ör: en az sipariş tutarı ne kadar en düşük çalışmıyo
+ör: ilk 3 siparişi göster +
+ör: en pahalı 5 ürün göster +
+ör: en ucuz 5 ürün göster +
