@@ -3,7 +3,7 @@ from where_c import build_time_where_clauses
 # intent + tablo bilgisini alır ve SQL cümlesine dönüştürür
 #neden bazı parametreler none?
 #çünkü kullanıcı örneğin her zaman bir parametre belirtmez kaç müşteri var der zaman belli değildir
-def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False, customer_name=None, limit=10, order_dir=None, selected_columns=None, condition=None, group_by_col=None, time_group=None) -> str | None:
+def generate_sql(intent: str, table: str, year=None, specific_date=None, interval_months=None, relative_time=None, distinct: bool=False, customer_name=None, limit=10, order_dir=None, selected_columns=None, condition=None, group_by_col=None, time_group=None, sort_context=None) -> str | None:
     """
     Parametreler:
     - intent: count, list vb.
@@ -202,30 +202,29 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
             sql += " WHERE " + " AND ".join(where_clauses)
 
         # SIRALAMA (TOP MANTIĞI BURADA)
-        # Eğer kullanıcı "en pahalı", "en yüksek" dediyse (MAX niyeti değil LIST niyetiyle)
-        # Ve bir sıralama yönü (DESC) varsa, fiyata veya tutara göre sıralamalıyız.
         if order_dir:
-            sort_col = target_date_col # Varsayılan: created_at
+            sort_col = target_date_col # Varsayılan: created_at (Zaman)
             
-            # 1. Ürünler tablosuysa -> FİYAT (price) kullan
-            if table == "products": 
+            # 1. Eğer bağlam "Para/Miktar" ise (Pahalı, Ucuz, Yüksek vb.)
+            if sort_context == "amount":
+                if table == "products": sort_col = "price"
+                elif table == "orders": sort_col = "total_amount"
+            
+            # 2. Eğer bağlam "Zaman" ise (İlk, Son vb.)
+            # sort_col zaten target_date_col (created_at) olarak kaldı. Değişmeye gerek yok.
+
+            # 3. Bağlam yoksa ama Tablo Ürünler ise (Varsayılan olarak fiyata göre sırala)
+            elif table == "products" and sort_context != "time":
                 sort_col = "price"
-            
-            # 2. Siparişler tablosuysa -> TUTAR (total_amount) kullan
-            # ("En yüksek sipariş" dediğinde artık tutara göre sıralayacak)
-            elif table == "orders":
-                sort_col = "total_amount"
                 
             sql += f" ORDER BY {sort_col} {order_dir}"
             
-        # Eğer kullanıcı yön belirtmediyse (Sadece "Siparişleri listele" dediyse)
         elif table == "orders": 
              sql += f" ORDER BY {target_date_col} DESC" # Varsayılan: Tarih (Yeniden eskiye)
 
         # LİMİT (TOP 5 vb.)
         sql += f" LIMIT {limit};"
         return sql
-    
 
 
 

@@ -28,6 +28,9 @@ INTENT_KEYWORDS = { #sözlükle beraber niyet eşleştirmesi yapacağız
     "max": {"en yüksek", "enyuksek", "enyüksek", "en yuksek", "en çok", "encok", "ençok", "en cok", "en fazla", "enfazla", "max", "max.", "maximum"},
     "min": {"en az", "en düşük", "minimum", "min.", "min", "enaz", "endusuk", "endüşük"},
     "avg": {"ortalama", "ort", "ort."},
+    "top": {"ilk", "son"}, 
+    "max": {"en çok", "en fazla", "en yüksek", "en yuksek", "en pahalı", "en pahali", "max", "maximum", "pahalı", "pahali"},
+    "min": {"en az", "en düşük", "en dusuk", "en ucuz", "minimum", "min", "ucuz", "düşük"},
     
 }
 
@@ -76,14 +79,26 @@ def detect_distinct(text: str) -> bool:
     return any(k in text for k in DISTINCT_KEYWORDS)
 
 def find_intent(text: str) -> str:
-    # SIRALAMA ÇOK ÖNEMLİ: Önce spesifik olanlar (Max/Min), sonra genel olanlar (Sum/List)
+    # 1. LİSTELEME (En Yüksek Öncelik)
+    # "En pahalı 5 ürünü GÖSTER" -> Burada 'en pahalı' olsa bile amaç listelemektir.
+    if any(k in text for k in INTENT_KEYWORDS["list"]): return "list"
+    
+    # 2. SAYMA (COUNT)
+    # "En az 1 sipariş veren KAÇ müşteri" -> Burada 'en az' (min) olsa bile amaç saymaktır.
+    # "Ne kadar" kelimesi COUNT listesinde olmadığı için "En pahalı ürün ne kadar" sorusu buraya TAKILMAZ.
+    if any(k in text for k in INTENT_KEYWORDS["count"]): return "count"
+
+    # 3. MAX / MIN (Tekil Değerler)
+    # "En pahalı ürün ne kadar" -> Üstteki count'a takılmadı, buraya düştü ve MAX oldu. (DOĞRU)
     if any(k in text for k in INTENT_KEYWORDS["max"]): return "max"
     if any(k in text for k in INTENT_KEYWORDS["min"]): return "min"
-    if any(k in text for k in INTENT_KEYWORDS["top"]): return "list" # İlk 5 gibi sorgular listelemedir
     
+    # 4. TOP (Listeleme varyasyonu)
+    # "İlk 5 sipariş" -> Listeleme mantığıdır.
+    if any(k in text for k in INTENT_KEYWORDS["top"]): return "list" 
+    
+    # 5. SUM / GENEL
     if any(k in text for k in INTENT_KEYWORDS["sum"]): return "sum"
-    if any(k in text for k in INTENT_KEYWORDS["count"]): return "count"
-    if any(k in text for k in INTENT_KEYWORDS["list"]): return "list"
     
     return "unknown"
 
@@ -224,3 +239,14 @@ def extract_grouping_request(text: str): #Kullanıcının gruplama isteyip istem
         return "name", None
             
     return None, None
+
+
+#Sıralama Bağlamı
+def detect_sort_context(text: str):
+    # Zaman belirten kelimeler
+    if any(k in text for k in ["son", "ilk", "yeni", "eski"]):
+        return "time"
+    # Miktar/Fiyat belirten kelimeler
+    if any(k in text for k in ["pahalı", "ucuz", "yüksek", "düşük", "fazla", "az", "cok", "çok"]):
+        return "amount"
+    return None
