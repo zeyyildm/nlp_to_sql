@@ -157,15 +157,18 @@ def detect_order_context(text: str) -> bool:
 #isimlerdeki nın nin siler ismi çeker
 def extract_customer_name(text: str):
     words = text.split()
+    # HATA ÇÖZÜMÜ: Bu kelimeleri veya köklerini asla isim olarak alma
+    ignore_list = ["urun", "urunu", "urunun", "musteri", "musterinin", "siparis", "siparisin", "siparisleri", "musterileri", "fiyat", "fiyati", "tutar", "tutari", "kac", "ne", "kadar", "hangi", "hangisi"]
+    
     for word in words:
-        # 3 harfli ekler (nin, nın, nun, nün)
-        if len(word) > 3 and (word.endswith("nin") or word.endswith("nın") or word.endswith("nun") or word.endswith("nün")):
-             return word[:-3] 
+        if word in ignore_list: continue 
         
-        # 2 harfli ekler (in, in, un, un)
-        if len(word) > 2 and (word.endswith("in") or word.endswith("ın") or word.endswith("un") or word.endswith("ün")):
-             return word[:-2]
-             
+        # Kelime "ur" veya "siparis" köküne iniyorsa atla
+        if word.startswith("urun") or word.startswith("siparis") or word.startswith("muster"): continue
+
+        if len(word) > 3 and word.endswith(("nin", "nın", "nun", "nün")): return word[:-3]
+        if len(word) > 2 and word.endswith(("in", "ın", "un", "ün")): return word[:-2]
+            
     return None
 
 
