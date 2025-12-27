@@ -34,7 +34,6 @@ COUNT:
 ör: son 3 ay kaç sipariş var +  
 ör: bu yıl kaç farklı müşteri sipariş verdi + 
 ör: bu yıl kaç müşteri en az 1 sipariş verdi + 
-ör: bu yıl kaç ürün eklendi  - 
 ör: 2025 te son 3 ayda kaç sipariş var + 
 ör: bu yıl kaç müşteri kayıt oldu +
 ör: bu ay kaç farklı ürün satıldı +
@@ -44,7 +43,6 @@ SUM:
 ör: 2025 martta toplam sipariş tutarı ne kadar +
 ör: bu ay toplam kaç ürün satıldı +
 ör: bu ay toplam gelir ne kadar (quantity * price) +
--: müşteri bazlı toplamlar
 -: beyzanın bu yıl toplam harcaması ne kadar - 
 ör: aylara göre toplam ciro nedir + 
 ör: müşterilere göre toplam harcama ne kadar +
@@ -57,7 +55,7 @@ LIST:
 -: siaprisleri musterileriyle listele  sadece müşteri bilgilerini listeliyor
 ör: 10 tl üzeri olanları listele  +
 ör: 1000 tl üzeri harcama yapan müşterileri listele + 
--: aylara göre siparişleri listele
+ör: aylara göre siparişleri listele +
 
 TOP MAX MIN:
 ör: en pahalı ürün ne kadar + 

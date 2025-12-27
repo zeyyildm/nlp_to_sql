@@ -161,6 +161,15 @@ def generate_sql(intent: str, table: str, year=None, specific_date=None, interva
 
     #LIST 
     if intent == "list":
+        # Aylara Göre Listeleme (Raporlama)
+        if time_group == "month":
+             # "Aylara göre siparişleri listele" denildiğinde aslında bir rapor (aggregation) istenir.
+             sql = f"SELECT TO_CHAR({target_date_col}, 'YYYY-MM') as donem, COUNT(*) as siparis_sayisi FROM {table}"
+             if where_clauses:
+                 sql += " WHERE " + " AND ".join(where_clauses)
+             sql += " GROUP BY donem ORDER BY donem"
+             return sql + ";"
+        
     # AGGREGATE FİLTRE (HAVING) VARSA ÖZEL İŞLEM] 
         # Örn: "1000 TL üzeri harcama yapan müşterileri listele"
         if table == "customers" and condition and condition[1] and condition[1] > 50:
