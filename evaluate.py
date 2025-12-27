@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 from rules import (
     normalize, find_intent, find_entity, detect_order_context, 
     extract_year, extract_month_year, extract_interval, detect_time_filter,
@@ -121,20 +122,61 @@ def run_evaluation():
     print("-" * 60)
     
     print("\nKATEGORİ BAZLI PERFORMANS:")
-    summary = df.groupby("Kategori")["Durum"].apply(lambda x: (x == "BAŞARILI").mean() * 100).reset_index()
-    print(summary)
+    category_summary = df.groupby("Kategori")["Durum"].apply(lambda x: (x == "BAŞARILI").mean() * 100).reset_index()
+    category_summary.rename(columns={"Durum": "Başarı (%)"}, inplace=True)
+    print(category_summary)
     
+    # Hata Raporu
     errors = df[df["Durum"] == "HATALI"]
     if not errors.empty:
-        print("\n--- HATALI SORGULAR ---")
+        print("\n--- HATALI SORGULAR (BEKLENEN DURUM) ---")
         for index, row in errors.iterrows():
             print(f"\nSoru: {row['Soru']}")
             print(f"Beklenen: {row['Beklenen']}")
             print(f"Üretilen: {row['Üretilen']}")
-    else:
-        print("\nTEBRİKLER! TÜM SORGULAR BAŞARILI.")
-
+    
+    # CSV Kaydet
     df.to_csv("degerlendirme_sonuclari.csv", index=False)
+    print("\nSonuçlar 'degerlendirme_sonuclari.csv' dosyasına kaydedildi.")
+
+    # GRAFİK ÇİZİMİ 
+    print("\nGrafik oluşturuluyor...")
+    
+    # Grafik Alanı (1 satır, 2 sütun)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    fig.suptitle(f'Model Performans Analizi (Genel Doğruluk: %{accuracy:.1f})', fontsize=16)
+
+    # 1. BAR GRAFİĞİ (Kategori Bazlı Başarı)
+    bars = ax1.bar(category_summary["Kategori"], category_summary["Başarı (%)"], color=['#4CAF50' if x == 100 else '#FF9800' for x in category_summary["Başarı (%)"]])
+    ax1.set_title("Kategori Bazlı Başarı Oranı", fontsize=12)
+    ax1.set_ylabel("Başarı Yüzdesi (%)")
+    ax1.set_ylim(0, 110)
+    
+    # Barların üzerine değer yazma
+    for bar in bars:
+        height = bar.get_height()
+        ax1.text(bar.get_x() + bar.get_width()/2., height + 1,
+                f'%{height:.1f}',
+                ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+    # 2. PASTA GRAFİĞİ (Genel Başarı/Hata Dağılımı)
+    success_count = df[df["Durum"] == "BAŞARILI"].shape[0]
+    fail_count = df[df["Durum"] == "HATALI"].shape[0]
+    
+    labels = [f'Başarılı ({success_count})', f'Hatalı ({fail_count})']
+    sizes = [success_count, fail_count]
+    colors = ['#4CAF50', '#F44336'] # Yeşil ve Kırmızı
+    explode = (0.1, 0)  # Başarılı dilimini biraz ayır
+
+    ax2.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%',
+            shadow=True, startangle=140)
+    ax2.set_title("Genel Model Başarısı", fontsize=12)
+
+    # Grafiği Kaydet
+    plt.tight_layout()
+    plt.savefig('degerlendirme_grafigi.png')
+    print("Grafik 'degerlendirme_grafigi.png' olarak kaydedildi.")
+    # plt.show() # Eğer masaüstü uygulamasıysa açar, sunucuda gerek yok
 
 if __name__ == "__main__":
     run_evaluation()
