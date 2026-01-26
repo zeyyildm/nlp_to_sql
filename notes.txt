@@ -43,7 +43,6 @@ SUM:
 ör: 2025 martta toplam sipariş tutarı ne kadar +
 ör: bu ay toplam kaç ürün satıldı +
 ör: bu ay toplam gelir ne kadar (quantity * price) +
--: beyzanın bu yıl toplam harcaması ne kadar -  ??
 ör: aylara göre toplam ciro nedir + 
 ör: müşterilere göre toplam harcama ne kadar +
 
@@ -66,3 +65,11 @@ TOP MAX MIN:
 ör: son 5 siparişi göster +
 ör: en pahalı 5 ürün göster +
 ör: en ucuz 5 ürün göster +
+
+
+
+
+
+
+
+-: beyzanın bu yıl toplam harcaması ne kadar -  
