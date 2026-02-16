@@ -48,7 +48,7 @@ A rule-based Natural Language Processing (NLP) system that converts Turkish natu
 
 3. **Install dependencies**
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirements.txt 
    ```
 
 4. **Configure database connection**
